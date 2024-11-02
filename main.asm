@@ -30,20 +30,19 @@ log_loop:
 log_end:
   ret
 
+; can overflow rn
+
 ; parses from 'read_buffer' starting at 'parse_start'
 ; puts parsed number into 'result' + 'result_len' slot
 ; outputs stopped character as 'rcx'
 ; stops at newline or space
 ; muts: rax rbx rcx r8 r9
 parse:
-  mov rcx, 0 
+  mov rcx, 0
 
-parse_loop:
-  cmp rcx, [buffer_len]
-  jge parse_exit
-  
+parse_loop: 
   mov r9, [parse_start]
-  add r9, rcx 
+  sub r9, rcx 
 
   movzx rax, byte [read_buffer + r9]
   
@@ -61,14 +60,8 @@ parse_loop:
   
   sub rax, '0'
 
-  mov r9, rcx
-  mov rcx, 4
-  sub rcx, 2
-  sub rcx, r9
-
   call log
 
-  mov rcx, r9
   mov r9, [result_len]
   add [result + 8*r9], rax
   
@@ -111,13 +104,16 @@ _start:
   mov rsi, read_buffer
   mov rdx, READ_BUFFER_SIZE
   syscall
-
   mov [buffer_len], rax
+
   mov rax, 0
   mov [result_len], rax
+
+  mov rax, [buffer_len]
+  sub rax, 2
   mov [parse_start], rax
 
-  call parse_all
+  call parse 
 
   mov rax, 60
   mov rdi, [result]
