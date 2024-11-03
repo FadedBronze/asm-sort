@@ -28,6 +28,8 @@ ten_to_the_n_exit:
 
 parse:
   mov r8, -1
+  cmp qword [buffer_len], 2
+  jl parse_end
 parse_reset:
   mov r9, 0
 parse_loop:
