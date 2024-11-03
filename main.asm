@@ -10,20 +10,18 @@ section .bss
 section .text
   global _start
 
-; n: rax
+; rax
 ten_to_the_n:
-  mov rbx, 10
   mov rcx, 0
 
 ten_to_the_n_loop:
-  cmp rax, rcx
+  cmp r9, rcx
   je ten_to_the_n_exit
-  mul rbx
+  imul rax, rax, 10
+  inc rcx
   jmp ten_to_the_n_loop
 
 ten_to_the_n_exit:
-  mov rbx, 0
-  mov rcx, 0
   ret
 
 parse:
@@ -34,19 +32,31 @@ parse_reset:
   mov r9, 0
 parse_loop:
   inc r8
-  mov rax, [buffer_len]
-  sub rax, 1
-  sub rax, r8
-  cmp byte [read_buffer + rax], 10
+  mov rdx, [buffer_len]
+  sub rdx, 1
+  sub rdx, r8
+  mov rax, 0
+  movzx rax, byte [read_buffer + rdx]
+
+  cmp rax, 10
   je parse_reset
-  cmp byte [read_buffer + rax], 32
+  cmp rax, 32
   je parse_reset
+  cmp rax, '0'
+  jl parse_reset
+  cmp rax, '9'
+  jg parse_reset
+  sub rax, '0'
   cmp r9, 0
   jne parse_skip_inc
   add qword [result_len], 1
 parse_skip_inc:
+  call ten_to_the_n
+  mov rcx, [result_len]
+  add [8*rcx - 8 + result], rax
+
   inc r9
-  cmp rax, 0
+  cmp rdx, 0
   je parse_end
   jmp parse_loop
 parse_end:
@@ -59,8 +69,12 @@ _start:
   mov rdx, READ_BUFFER_SIZE
   syscall
   mov [buffer_len], rax
+
   call parse
+  mov rcx, [result_len]
+  dec rcx
+
   mov rax, 60
-  mov rdi, [result_len]
+  mov rdi, [result + 8*rcx]
   syscall
   ret
