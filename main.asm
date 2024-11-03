@@ -10,7 +10,6 @@ section .bss
 section .text
   global _start
 
-; rax
 ten_to_the_n:
   mov rcx, 0
 
@@ -62,6 +61,36 @@ parse_skip_inc:
 parse_end:
   ret
 
+sort:
+  mov rdx, -1
+
+sort_out_loop:
+  inc rdx
+  mov rcx, rdx
+  dec rcx
+
+  cmp rdx, [result_len]
+  je sort_exit
+  
+sort_in_loop:
+  inc rcx
+  
+  cmp rcx, [result_len]
+  je sort_out_loop
+
+  mov rax, [result + 8*rdx]
+  mov r8, [result + 8*rcx]
+  cmp rax, r8
+  jle sort_in_loop
+
+  mov [result + 8*rcx], rax
+  mov [result + 8*rdx], r8
+
+  jmp sort_in_loop
+
+sort_exit:
+  ret
+
 _start:
   mov rax, 0
   mov rdi, 0
@@ -71,10 +100,9 @@ _start:
   mov [buffer_len], rax
 
   call parse
-  mov rcx, [result_len]
-  dec rcx
+  call sort
 
   mov rax, 60
-  mov rdi, [result + 8*rcx]
+  mov rdi, [result]
   syscall
   ret
